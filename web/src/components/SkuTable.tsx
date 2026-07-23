@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import type { SkuResult } from "../types";
+import ScoreBar from "./ScoreBar";
 
 type SortKey = "sku_id" | "readiness" | "after_score" | "revenue_at_risk";
 
@@ -84,11 +85,22 @@ export default function SkuTable({ results, onOpen }: SkuTableProps) {
                   {result.title ?? "untitled"}
                 </div>
               </td>
-              <td className="px-4 py-3 font-medium text-stone-900">
-                {result.readiness.toFixed(1)}
+              <td className="px-4 py-3">
+                <div className="font-medium text-stone-900">
+                  {result.readiness.toFixed(1)}
+                </div>
+                <ScoreBar value={result.readiness} />
               </td>
-              <td className="px-4 py-3 text-stone-700">
-                {result.after_score === null ? "n/a" : result.after_score.toFixed(1)}
+              <td className="px-4 py-3">
+                <div className="text-stone-700">
+                  {result.after_score === null ? "n/a" : result.after_score.toFixed(1)}
+                </div>
+                {result.after_score !== null && (
+                  <ScoreBar
+                    value={result.before_score}
+                    projected={result.after_score}
+                  />
+                )}
               </td>
               <td className="px-4 py-3 text-stone-700">{formatRevenue(result)}</td>
               <td className="px-4 py-3 text-stone-700">
