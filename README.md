@@ -9,9 +9,9 @@ For each SKU, AgentReady:
 - ranks the specific gaps that suppress visibility, ordered by revenue at risk
 - rewrites weak attributes into clean structured values, using only information already present in the product data
 
-## Status
+## Live demo
 
-Under construction. Sections below fill in as each part of the build lands.
+https://shopagentready.vercel.app serves a saved audit of the bundled sample catalog. The first load can take up to a minute if the backend is waking from sleep. Live audits run locally, see below.
 
 ## The readiness rubric
 
