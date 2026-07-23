@@ -139,6 +139,50 @@ def test_backoff_on_429_then_success():
     assert sleep.calls == [1.0, 2.0]
 
 
+def test_retry_after_header_extends_backoff():
+    responses = [httpx.Response(429, headers={"retry-after": "30"}, json={})]
+
+    def handler(request):
+        if responses:
+            return responses.pop(0)
+        return chat_response("ok")
+
+    provider, sleep = make_provider(handler)
+    assert provider.complete("s", "u") == "ok"
+    assert sleep.calls == [30.0]
+
+
+def test_retry_hint_in_body_extends_backoff():
+    responses = [
+        httpx.Response(
+            429,
+            json={"error": {"message": "Quota exceeded. Please retry in 45.44s."}},
+        )
+    ]
+
+    def handler(request):
+        if responses:
+            return responses.pop(0)
+        return chat_response("ok")
+
+    provider, sleep = make_provider(handler)
+    assert provider.complete("s", "u") == "ok"
+    assert sleep.calls == [45.44]
+
+
+def test_retry_wait_is_capped():
+    responses = [httpx.Response(429, headers={"retry-after": "600"}, json={})]
+
+    def handler(request):
+        if responses:
+            return responses.pop(0)
+        return chat_response("ok")
+
+    provider, sleep = make_provider(handler)
+    assert provider.complete("s", "u") == "ok"
+    assert sleep.calls == [70.0]
+
+
 def test_rate_limited_after_exhausted_attempts():
     provider, sleep = make_provider(lambda request: httpx.Response(429, json={}))
     with pytest.raises(LLMRateLimited):

@@ -26,8 +26,11 @@ logger = logging.getLogger("app.llm")
 
 MAX_ATTEMPTS = 4
 BACKOFF_DELAYS = (1.0, 2.0, 4.0, 8.0)
+MAX_BACKOFF_WAIT_SECONDS = 70.0
 RATE_WINDOW_SECONDS = 60.0
 REQUEST_TIMEOUT_SECONDS = 60.0
+
+_RETRY_HINT_RE = re.compile(r"retry in (\d+(?:\.\d+)?)s", re.IGNORECASE)
 
 JSON_ONLY_INSTRUCTION = (
     "Respond with valid JSON only. No prose, no code fences, no explanations."
@@ -95,6 +98,28 @@ def _is_valid_json(text: str) -> bool:
     except (ValueError, TypeError):
         return False
     return True
+
+
+def _retry_delay(response: httpx.Response, attempt: int) -> float:
+    """Backoff delay for a retryable response. The exponential schedule is
+    the floor; when the endpoint says how long to wait, honor it (capped),
+    otherwise short retries land inside the same exhausted window and burn
+    attempts for nothing."""
+    delay = BACKOFF_DELAYS[attempt]
+    header = response.headers.get("retry-after")
+    if header:
+        try:
+            delay = max(delay, float(header))
+        except ValueError:
+            pass
+    else:
+        try:
+            match = _RETRY_HINT_RE.search(response.text)
+        except Exception:
+            match = None
+        if match:
+            delay = max(delay, float(match.group(1)))
+    return min(delay, MAX_BACKOFF_WAIT_SECONDS)
 
 
 class LLMProvider:
@@ -180,7 +205,7 @@ class LLMProvider:
                     raise LLMRateLimited(
                         f"rate limited after {MAX_ATTEMPTS} attempts, degrading"
                     )
-                self._sleep(BACKOFF_DELAYS[attempt])
+                self._sleep(_retry_delay(response, attempt))
                 continue
             raise LLMError(f"request failed with status {response.status_code}")
         raise LLMRateLimited("request attempts exhausted")
