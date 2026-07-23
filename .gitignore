@@ -9,6 +9,7 @@ __pycache__/
 *.egg-info/
 .venv/
 venv/
+.pytest_cache/
 
 # Node / frontend build
 node_modules/
