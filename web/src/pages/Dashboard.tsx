@@ -91,12 +91,29 @@ export default function Dashboard({
   const aggregates = results.aggregates;
   return (
     <div className="space-y-6">
-      {demo && (
-        <div className="rounded-lg border border-stone-200 bg-white p-4 text-sm text-stone-600">
-          This is a saved demo audit of the bundled sample catalog. Live
-          audits run locally, see the README for setup.
-        </div>
-      )}
+      <div className="rounded-lg border border-stone-200 bg-white p-6">
+        <h2 className="text-xl font-semibold text-stone-900">
+          Is your catalog ready for AI shoppers?
+        </h2>
+        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-stone-600">
+          AI shopping assistants such as ChatGPT shopping, Gemini, and Rufus
+          are becoming how people find products. When a product's data is
+          thin or vague, an assistant cannot tell whether it answers the
+          shopper's question, so it recommends something else. AgentReady
+          reads a product catalog and scores every product from 0 to 100 on
+          how likely it is to be found, understood, and recommended.
+        </p>
+        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-stone-600">
+          Each score combines two measurements: how complete the product's
+          data is against a weighted rubric of the attributes assistants
+          rely on, and how often the product survives simulated shopper
+          queries run against its actual data. Click any row in the table to
+          see those queries, the ranked data gaps, and a rewritten version
+          of the weak attributes.
+          {demo &&
+            " This page is a saved audit of a 20 product sample catalog, so you can explore without setting anything up."}
+        </p>
+      </div>
       {aggregates && aggregates.rate_limited_skus > 0 && (
         <div className="rounded-lg border border-stone-300 bg-stone-100 p-4 text-sm text-stone-700">
           Query simulation was temporarily unavailable for{" "}
