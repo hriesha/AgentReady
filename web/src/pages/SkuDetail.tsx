@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getSkuResult } from "../api/client";
+import AttributeBreakdown from "../components/AttributeBreakdown";
 import BeforeAfter from "../components/BeforeAfter";
 import GapList from "../components/GapList";
 import QuerySimPanel from "../components/QuerySimPanel";
@@ -83,6 +84,13 @@ export default function SkuDetail({ runId, skuId, onBack }: SkuDetailProps) {
               </dl>
             </div>
           </div>
+
+          <section>
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-stone-500">
+              Data completeness
+            </h3>
+            <AttributeBreakdown completeness={result.completeness} />
+          </section>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <section>
