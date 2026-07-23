@@ -67,6 +67,20 @@ export default function SkuTable({ results, onOpen }: SkuTableProps) {
                   {header.label}
                   {sortKey === header.key ? (descending ? " (desc)" : " (asc)") : ""}
                 </button>
+                {header.key === "after_score" && (
+                  <span className="mt-1 flex items-center gap-1.5 text-[10px] font-normal normal-case tracking-normal text-stone-500">
+                    <span
+                      className="inline-block h-1.5 w-3 rounded-full"
+                      style={{ backgroundColor: "#065f46" }}
+                    />
+                    today
+                    <span
+                      className="inline-block h-1.5 w-3 rounded-full"
+                      style={{ backgroundColor: "#6ee7b7" }}
+                    />
+                    lift after fixes
+                  </span>
+                )}
               </th>
             ))}
             <th className="px-4 py-3 font-medium">Top gap</th>
