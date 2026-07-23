@@ -15,12 +15,52 @@ sys.path.insert(0, str(API_DIR))
 
 from app.catalog.ingest import ingest_catalog  # noqa: E402
 from app.llm.provider import LLMProvider  # noqa: E402
-from app.scoring.pipeline import run_audit  # noqa: E402
+from app.scoring.pipeline import audit_sku, compute_aggregates, run_audit  # noqa: E402
 
 SAMPLE_CATALOG = API_DIR / "tests" / "sample_catalog.csv"
 FIXTURE_PATH = API_DIR / "app" / "demo" / "sample_audit.json"
 
 MAX_REQUESTS = 150
+
+DEGRADED = "unavailable_rate_limited"
+
+
+def _is_degraded(result: dict) -> bool:
+    return DEGRADED in (result["simulation"]["status"], result["rewrite"]["status"])
+
+
+def retry_degraded() -> int:
+    """Re-audit only the SKUs a previous build left degraded, merge them
+    into the existing fixture, and rebuild the aggregates. Cheaper than a
+    full rebuild, protects the free daily cap."""
+    fixture = json.loads(FIXTURE_PATH.read_text())
+    catalog = {str(sku["sku_id"]): sku for sku in fixture["catalog"]}
+    provider = LLMProvider()
+    replaced = 0
+    for index, result in enumerate(fixture["sku_results"]):
+        if not _is_degraded(result):
+            continue
+        sku = catalog.get(str(result["sku_id"]))
+        if sku is None:
+            continue
+        if provider.usage()["requests"] > MAX_REQUESTS:
+            print("request budget exceeded, stopping early")
+            break
+        fresh = audit_sku(sku, provider)
+        if _is_degraded(fresh):
+            print(f"{result['sku_id']} still rate limited, keeping previous result", flush=True)
+            continue
+        fixture["sku_results"][index] = fresh
+        replaced += 1
+        print(f"{result['sku_id']} replaced, {provider.usage()['requests']} requests so far", flush=True)
+
+    fixture["aggregates"] = compute_aggregates(fixture["sku_results"])
+    FIXTURE_PATH.write_text(json.dumps(fixture, indent=2, ensure_ascii=False) + "\n")
+    usage = provider.usage()
+    remaining = sum(1 for result in fixture["sku_results"] if _is_degraded(result))
+    print(f"replaced {replaced} results, {remaining} still degraded")
+    print(f"total this run: {usage['requests']} requests")
+    return 1 if remaining else 0
 
 
 def main() -> int:
@@ -65,4 +105,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    if "--retry-degraded" in sys.argv:
+        raise SystemExit(retry_degraded())
     raise SystemExit(main())
