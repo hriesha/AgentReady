@@ -15,3 +15,6 @@ build:
 
 test:
 	cd api && ../$(VENV)/bin/python -m pytest -q
+
+demo-fixture:
+	cd api && ../$(VENV)/bin/python scripts/build_demo_fixture.py
