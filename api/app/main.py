@@ -16,7 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response, StreamingResponse
 from sqlalchemy import select
 
-from app import models
+from app import demo, models
 from app.catalog.ingest import CatalogValidationError, ingest_catalog
 from app.config import get_settings
 from app.db import create_session, init_db
@@ -54,6 +54,33 @@ app.add_middleware(
 )
 
 
+def _demo_active() -> bool:
+    return get_settings().demo_mode and demo.get_fixture() is not None
+
+
+def _demo_fixture_for(run_id: str) -> dict | None:
+    if run_id == demo.DEMO_RUN_ID and _demo_active():
+        return demo.get_fixture()
+    return None
+
+
+def _reject_when_demo() -> None:
+    if get_settings().demo_mode:
+        raise HTTPException(
+            status_code=403,
+            detail="live audits are disabled here, this is a saved demo; run live audits locally",
+        )
+
+
+@app.get("/api/meta")
+async def get_meta() -> dict:
+    active = _demo_active()
+    return {
+        "demo_mode": active,
+        "demo_run_id": demo.DEMO_RUN_ID if active else None,
+    }
+
+
 def _load_run(run_id: str) -> models.AuditRun:
     with create_session() as session:
         run = session.get(models.AuditRun, run_id)
@@ -64,6 +91,7 @@ def _load_run(run_id: str) -> models.AuditRun:
 
 @app.post("/api/catalog/upload", response_model=UploadResponse)
 async def upload_catalog(file: UploadFile) -> UploadResponse:
+    _reject_when_demo()
     try:
         ingested = ingest_catalog(file.file)
     except CatalogValidationError as error:
@@ -102,6 +130,7 @@ async def sample_catalog() -> FileResponse:
 
 @app.post("/api/audit/{run_id}/start", response_model=StartResponse)
 async def start_audit(run_id: str, background_tasks: BackgroundTasks) -> StartResponse:
+    _reject_when_demo()
     with create_session() as session:
         run = session.get(models.AuditRun, run_id)
         if run is None:
@@ -168,6 +197,11 @@ def execute_audit(run_id: str) -> None:
 
 @app.get("/api/audit/{run_id}/stream")
 async def stream_progress(run_id: str) -> StreamingResponse:
+    if _demo_fixture_for(run_id) is not None:
+        def demo_stream():
+            yield f"event: done\ndata: {json.dumps({'status': models.RUN_COMPLETE})}\n\n"
+
+        return StreamingResponse(demo_stream(), media_type="text/event-stream")
     run = _load_run(run_id)
     run_status = run.status
 
@@ -216,21 +250,40 @@ def _csv_download(content: str, filename: str) -> Response:
 
 @app.get("/api/audit/{run_id}/export/audit.csv")
 async def export_audit_report(run_id: str) -> Response:
-    _run, results = _load_results(run_id)
+    fixture = _demo_fixture_for(run_id)
+    if fixture is not None:
+        results = fixture["sku_results"]
+    else:
+        _run, results = _load_results(run_id)
     return _csv_download(audit_report_csv(results), "agentready_audit.csv")
 
 
 @app.get("/api/audit/{run_id}/export/rewritten.csv")
 async def export_rewritten_catalog(run_id: str) -> Response:
-    run, results = _load_results(run_id)
+    fixture = _demo_fixture_for(run_id)
+    if fixture is not None:
+        catalog, results = fixture["catalog"], fixture["sku_results"]
+    else:
+        run, results = _load_results(run_id)
+        catalog = run.catalog or []
     return _csv_download(
-        rewritten_catalog_csv(run.catalog or [], results),
+        rewritten_catalog_csv(catalog, results),
         "agentready_rewritten_catalog.csv",
     )
 
 
 @app.get("/api/audit/{run_id}", response_model=RunResultsResponse)
 async def get_results(run_id: str) -> RunResultsResponse:
+    fixture = _demo_fixture_for(run_id)
+    if fixture is not None:
+        return RunResultsResponse(
+            run_id=fixture["run_id"],
+            status=fixture["status"],
+            sku_count=fixture["sku_count"],
+            mapping_report=fixture["mapping_report"],
+            aggregates=fixture["aggregates"],
+            sku_results=fixture["sku_results"],
+        )
     run, results = _load_results(run_id)
     return RunResultsResponse(
         run_id=run.id,
@@ -244,6 +297,14 @@ async def get_results(run_id: str) -> RunResultsResponse:
 
 @app.get("/api/audit/{run_id}/sku/{sku_id}", response_model=SkuResultModel)
 async def get_sku_result(run_id: str, sku_id: str) -> SkuResultModel:
+    fixture = _demo_fixture_for(run_id)
+    if fixture is not None:
+        found = next(
+            (r for r in fixture["sku_results"] if r["sku_id"] == sku_id), None
+        )
+        if found is None:
+            raise HTTPException(status_code=404, detail="SKU result not found")
+        return found
     _load_run(run_id)
     with create_session() as session:
         row = (
