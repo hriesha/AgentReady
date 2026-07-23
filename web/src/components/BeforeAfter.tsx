@@ -45,13 +45,21 @@ export default function BeforeAfter({
   return (
     <div>
       {afterScore !== null && (
-        <p className="mb-3 text-sm text-stone-600">
+        <p className="mb-2 text-sm text-stone-600">
           Completeness {beforeScore.toFixed(1)} now, projected{" "}
           <span className="font-medium text-stone-900">
             {afterScore.toFixed(1)}
           </span>{" "}
           after applying the rewrites, a lift of{" "}
           {(afterScore - beforeScore).toFixed(1)} points.
+        </p>
+      )}
+      {rewrite.outcomes.some((outcome) => outcome.needs_human) && (
+        <p className="mb-3 text-xs text-stone-500">
+          Rows marked "needs a human" are facts the tool refuses to invent,
+          like real measurements, materials, or certifications. Someone on
+          your team has to supply those. Everything else was rewritten using
+          only information the product data already contained.
         </p>
       )}
       <div className="overflow-x-auto rounded-lg border border-stone-200 bg-white">
