@@ -13,13 +13,14 @@ from pathlib import Path
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, Response, StreamingResponse
 from sqlalchemy import select
 
 from app import models
 from app.catalog.ingest import CatalogValidationError, ingest_catalog
 from app.config import get_settings
 from app.db import create_session, init_db
+from app.export.csv_export import audit_report_csv, rewritten_catalog_csv
 from app.llm.provider import get_provider
 from app.progress import ProgressBroker
 from app.schemas import (
@@ -188,8 +189,7 @@ async def stream_progress(run_id: str) -> StreamingResponse:
     )
 
 
-@app.get("/api/audit/{run_id}", response_model=RunResultsResponse)
-async def get_results(run_id: str) -> RunResultsResponse:
+def _load_results(run_id: str) -> tuple[models.AuditRun, list[dict]]:
     with create_session() as session:
         run = session.get(models.AuditRun, run_id)
         if run is None:
@@ -203,13 +203,42 @@ async def get_results(run_id: str) -> RunResultsResponse:
             .scalars()
             .all()
         )
+    return run, [row.result for row in rows]
+
+
+def _csv_download(content: str, filename: str) -> Response:
+    return Response(
+        content,
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@app.get("/api/audit/{run_id}/export/audit.csv")
+async def export_audit_report(run_id: str) -> Response:
+    _run, results = _load_results(run_id)
+    return _csv_download(audit_report_csv(results), "agentready_audit.csv")
+
+
+@app.get("/api/audit/{run_id}/export/rewritten.csv")
+async def export_rewritten_catalog(run_id: str) -> Response:
+    run, results = _load_results(run_id)
+    return _csv_download(
+        rewritten_catalog_csv(run.catalog or [], results),
+        "agentready_rewritten_catalog.csv",
+    )
+
+
+@app.get("/api/audit/{run_id}", response_model=RunResultsResponse)
+async def get_results(run_id: str) -> RunResultsResponse:
+    run, results = _load_results(run_id)
     return RunResultsResponse(
         run_id=run.id,
         status=run.status,
         sku_count=run.sku_count,
         mapping_report=run.mapping_report,
         aggregates=run.aggregates,
-        sku_results=[row.result for row in rows],
+        sku_results=results,
     )
 
 
