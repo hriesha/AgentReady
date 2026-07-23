@@ -111,7 +111,7 @@ export default function Dashboard({
           see those queries, the ranked data gaps, and a rewritten version
           of the weak attributes.
           {demo &&
-            " This page is a saved audit of a 20 product sample catalog, so you can explore without setting anything up."}{" "}
+            " This page is a saved audit of the catalog of Loomhouse, a fictional home goods shop with 20 products, so you can explore without setting anything up."}{" "}
           To run this on your own storefront's catalog, head to the{" "}
           <a
             href="https://github.com/hriesha/AgentReady"
