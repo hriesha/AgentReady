@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { getResults, subscribeProgress } from "../api/client";
+import { exportUrl, getResults, subscribeProgress } from "../api/client";
 import ProgressBar from "../components/ProgressBar";
 import ScoreGauge from "../components/ScoreGauge";
 import SkuTable from "../components/SkuTable";
@@ -151,13 +151,27 @@ export default function Dashboard({ runId, onOpenSku, onReset }: DashboardProps)
           <h2 className="text-lg font-semibold text-slate-900">
             SKUs by revenue at risk
           </h2>
-          <button
-            type="button"
-            onClick={onReset}
-            className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100"
-          >
-            Audit another catalog
-          </button>
+          <div className="flex gap-2">
+            <a
+              href={exportUrl(runId, "audit")}
+              className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100"
+            >
+              Download audit CSV
+            </a>
+            <a
+              href={exportUrl(runId, "rewritten")}
+              className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100"
+            >
+              Download rewritten catalog CSV
+            </a>
+            <button
+              type="button"
+              onClick={onReset}
+              className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100"
+            >
+              Audit another catalog
+            </button>
+          </div>
         </div>
         <SkuTable results={results.sku_results} onOpen={onOpenSku} />
       </div>

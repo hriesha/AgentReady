@@ -62,6 +62,10 @@ export function getSkuResult(runId: string, skuId: string): Promise<SkuResult> {
   );
 }
 
+export function exportUrl(runId: string, kind: "audit" | "rewritten"): string {
+  return `${API_BASE}/api/audit/${runId}/export/${kind}.csv`;
+}
+
 export function subscribeProgress(
   runId: string,
   onProgress: (event: ProgressEvent) => void,
