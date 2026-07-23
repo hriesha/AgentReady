@@ -111,7 +111,15 @@ export default function Dashboard({
           see those queries, the ranked data gaps, and a rewritten version
           of the weak attributes.
           {demo &&
-            " This page is a saved audit of a 20 product sample catalog, so you can explore without setting anything up."}
+            " This page is a saved audit of a 20 product sample catalog, so you can explore without setting anything up."}{" "}
+          To run this on your own storefront's catalog, head to the{" "}
+          <a
+            href="https://github.com/hriesha/AgentReady"
+            className="underline decoration-stone-400 underline-offset-2 hover:text-stone-900"
+          >
+            GitHub page
+          </a>{" "}
+          for setup instructions.
         </p>
       </div>
       {aggregates && aggregates.rate_limited_skus > 0 && (
@@ -161,13 +169,24 @@ export default function Dashboard({
             <h3 className="text-xs font-medium uppercase tracking-wide text-stone-500">
               Most common gaps
             </h3>
-            <ul className="mt-3 space-y-2 text-sm">
+            <ul className="mt-3 space-y-2.5 text-sm">
               {aggregates.top_gaps.slice(0, 5).map((gap) => (
-                <li key={gap.attribute} className="flex justify-between">
-                  <span className="text-stone-700">{gap.attribute}</span>
-                  <span className="text-stone-500">
-                    {Math.round(gap.share * 100)}% of SKUs
-                  </span>
+                <li key={gap.attribute}>
+                  <div className="flex justify-between">
+                    <span className="text-stone-700">{gap.attribute}</span>
+                    <span className="text-stone-500">
+                      {Math.round(gap.share * 100)}% of SKUs
+                    </span>
+                  </div>
+                  <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-stone-200">
+                    <div
+                      className="h-full"
+                      style={{
+                        width: `${gap.share * 100}%`,
+                        backgroundColor: "#065f46",
+                      }}
+                    />
+                  </div>
                 </li>
               ))}
             </ul>
@@ -203,6 +222,43 @@ export default function Dashboard({
               </button>
             )}
           </div>
+        </div>
+        <div className="mb-3 rounded-lg border border-stone-200 bg-white p-4">
+          <dl className="grid grid-cols-1 gap-x-8 gap-y-2 text-xs text-stone-600 sm:grid-cols-2">
+            <div>
+              <dt className="inline font-medium text-stone-900">Readiness.</dt>{" "}
+              <dd className="inline">
+                0 to 100, blending how complete the product's data is (60%)
+                with how often it surfaced in simulated shopper queries (40%).
+              </dd>
+            </div>
+            <div>
+              <dt className="inline font-medium text-stone-900">
+                Projected after fixes.
+              </dt>{" "}
+              <dd className="inline">
+                The completeness score if the suggested rewrites are applied.
+                The light green segment of the bar is the projected lift.
+              </dd>
+            </div>
+            <div>
+              <dt className="inline font-medium text-stone-900">
+                Revenue at risk.
+              </dt>{" "}
+              <dd className="inline">
+                Monthly revenue riding on this product, taken from the sales
+                columns of the uploaded catalog. (est.) marks a placeholder
+                when no sales data was provided.
+              </dd>
+            </div>
+            <div>
+              <dt className="inline font-medium text-stone-900">Top gap.</dt>{" "}
+              <dd className="inline">
+                The missing or vague attribute holding this product back the
+                most, weighted by how often simulated queries needed it.
+              </dd>
+            </div>
+          </dl>
         </div>
         <SkuTable results={results.sku_results} onOpen={onOpenSku} />
       </div>
