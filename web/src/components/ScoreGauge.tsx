@@ -1,7 +1,7 @@
 import { PolarAngleAxis, RadialBar, RadialBarChart } from "recharts";
 
-const GAUGE_FILL = "#2a78d6";
-const GAUGE_TRACK = "#e2e8f0";
+const GAUGE_FILL = "#065f46";
+const GAUGE_TRACK = "#e7e5e4";
 
 interface ScoreGaugeProps {
   score: number;
@@ -34,13 +34,13 @@ export default function ScoreGauge({ score, label }: ScoreGaugeProps) {
           />
         </RadialBarChart>
         <div className="absolute inset-x-0 top-[62px] text-center">
-          <div className="text-3xl font-semibold text-slate-900">
+          <div className="text-3xl font-semibold text-stone-900">
             {clamped.toFixed(1)}
           </div>
-          <div className="text-xs text-slate-500">of 100</div>
+          <div className="text-xs text-stone-500">of 100</div>
         </div>
       </div>
-      <div className="mt-1 text-sm text-slate-600">{label}</div>
+      <div className="mt-1 text-sm text-stone-600">{label}</div>
     </div>
   );
 }

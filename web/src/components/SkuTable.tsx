@@ -52,16 +52,16 @@ export default function SkuTable({ results, onOpen }: SkuTableProps) {
   };
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+    <div className="overflow-x-auto rounded-lg border border-stone-200 bg-white">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
+          <tr className="border-b border-stone-200 text-left text-xs uppercase tracking-wide text-stone-500">
             {HEADERS.map((header) => (
               <th key={header.key} className="px-4 py-3">
                 <button
                   type="button"
                   onClick={() => toggleSort(header.key)}
-                  className="font-medium hover:text-slate-800"
+                  className="font-medium hover:text-stone-800"
                 >
                   {header.label}
                   {sortKey === header.key ? (descending ? " (desc)" : " (asc)") : ""}
@@ -76,22 +76,22 @@ export default function SkuTable({ results, onOpen }: SkuTableProps) {
             <tr
               key={result.sku_id}
               onClick={() => onOpen(result.sku_id)}
-              className="cursor-pointer border-b border-slate-100 last:border-b-0 hover:bg-slate-50"
+              className="cursor-pointer border-b border-stone-100 last:border-b-0 hover:bg-stone-50"
             >
               <td className="px-4 py-3">
-                <div className="font-medium text-slate-900">{result.sku_id}</div>
-                <div className="max-w-xs truncate text-slate-500">
+                <div className="font-medium text-stone-900">{result.sku_id}</div>
+                <div className="max-w-xs truncate text-stone-500">
                   {result.title ?? "untitled"}
                 </div>
               </td>
-              <td className="px-4 py-3 font-medium text-slate-900">
+              <td className="px-4 py-3 font-medium text-stone-900">
                 {result.readiness.toFixed(1)}
               </td>
-              <td className="px-4 py-3 text-slate-700">
+              <td className="px-4 py-3 text-stone-700">
                 {result.after_score === null ? "n/a" : result.after_score.toFixed(1)}
               </td>
-              <td className="px-4 py-3 text-slate-700">{formatRevenue(result)}</td>
-              <td className="px-4 py-3 text-slate-700">
+              <td className="px-4 py-3 text-stone-700">{formatRevenue(result)}</td>
+              <td className="px-4 py-3 text-stone-700">
                 {result.gaps.length > 0 ? result.gaps[0].attribute : "none"}
               </td>
             </tr>

@@ -52,10 +52,10 @@ export default function Upload({ onAuditStarted }: UploadProps) {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h2 className="text-lg font-semibold text-slate-900">
+      <h2 className="text-lg font-semibold text-stone-900">
         Audit a product catalog
       </h2>
-      <p className="mt-1 text-sm text-slate-600">
+      <p className="mt-1 text-sm text-stone-600">
         Upload a catalog CSV to score how ready each product is to be found
         and recommended by AI shopping assistants.
       </p>
@@ -72,16 +72,16 @@ export default function Upload({ onAuditStarted }: UploadProps) {
           onFileChosen(event.dataTransfer.files[0]);
         }}
         className={`mt-6 rounded-lg border-2 border-dashed p-10 text-center ${
-          dragActive ? "border-slate-500 bg-slate-100" : "border-slate-300 bg-white"
+          dragActive ? "border-stone-500 bg-stone-100" : "border-stone-300 bg-white"
         }`}
       >
-        <p className="text-sm text-slate-600">Drop a CSV here, or</p>
+        <p className="text-sm text-stone-600">Drop a CSV here, or</p>
         <div className="mt-3 flex items-center justify-center gap-3">
           <button
             type="button"
             disabled={busy}
             onClick={() => inputRef.current?.click()}
-            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
+            className="rounded-md bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700 disabled:opacity-50"
           >
             Choose a file
           </button>
@@ -89,7 +89,7 @@ export default function Upload({ onAuditStarted }: UploadProps) {
             type="button"
             disabled={busy}
             onClick={() => void handleUpload(uploadSampleCatalog())}
-            className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+            className="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-100 disabled:opacity-50"
           >
             Use sample catalog
           </button>
@@ -101,46 +101,46 @@ export default function Upload({ onAuditStarted }: UploadProps) {
           className="hidden"
           onChange={(event) => onFileChosen(event.target.files?.[0])}
         />
-        {busy && <p className="mt-3 text-sm text-slate-500">Uploading...</p>}
+        {busy && <p className="mt-3 text-sm text-stone-500">Uploading...</p>}
       </div>
 
       {error && (
-        <div className="mt-4 rounded-lg border border-slate-300 bg-white p-4 text-sm text-slate-700">
+        <div className="mt-4 rounded-lg border border-stone-300 bg-white p-4 text-sm text-stone-700">
           {error}
         </div>
       )}
 
       {upload && (
-        <div className="mt-6 rounded-lg border border-slate-200 bg-white p-5">
+        <div className="mt-6 rounded-lg border border-stone-200 bg-white p-5">
           <div className="flex items-center justify-between">
-            <h3 className="font-medium text-slate-900">
+            <h3 className="font-medium text-stone-900">
               {upload.sku_count} SKUs parsed
             </h3>
             <button
               type="button"
               disabled={starting}
               onClick={() => void runAudit()}
-              className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
+              className="rounded-md bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700 disabled:opacity-50"
             >
               {starting ? "Starting..." : "Run audit"}
             </button>
           </div>
 
-          <h4 className="mt-4 text-xs font-medium uppercase tracking-wide text-slate-500">
+          <h4 className="mt-4 text-xs font-medium uppercase tracking-wide text-stone-500">
             Column mapping
           </h4>
           <ul className="mt-2 grid grid-cols-1 gap-1 text-sm sm:grid-cols-2">
             {Object.entries(upload.mapping_report.mapped).map(
               ([source, target]) => (
-                <li key={source} className="text-slate-700">
-                  <span className="text-slate-500">{source}</span> mapped to{" "}
+                <li key={source} className="text-stone-700">
+                  <span className="text-stone-500">{source}</span> mapped to{" "}
                   <span className="font-medium">{target}</span>
                 </li>
               ),
             )}
           </ul>
           {upload.mapping_report.extra.length > 0 && (
-            <p className="mt-3 text-sm text-slate-500">
+            <p className="mt-3 text-sm text-stone-500">
               Kept as extra attributes:{" "}
               {upload.mapping_report.extra.join(", ")}
             </p>
