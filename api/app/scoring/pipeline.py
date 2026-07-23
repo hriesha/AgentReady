@@ -110,6 +110,12 @@ def run_audit(
         if on_progress is not None:
             on_progress(index + 1, total, result["sku_id"], "done")
 
+    return {"sku_results": results, "aggregates": compute_aggregates(results)}
+
+
+def compute_aggregates(results: list[dict]) -> dict:
+    """Catalog-level aggregates over per-SKU results. Also used to rebuild
+    aggregates after individual results are replaced."""
     readiness_values = [result["readiness"] for result in results]
     unweighted = (
         round(sum(readiness_values) / len(readiness_values), 1) if results else 0.0
@@ -131,13 +137,10 @@ def run_audit(
     )
 
     return {
-        "sku_results": results,
-        "aggregates": {
-            "sku_count": total,
-            "readiness_revenue_weighted": weighted,
-            "readiness_unweighted": unweighted,
-            "revenue_at_risk_total": round(total_revenue, 2),
-            "rate_limited_skus": rate_limited,
-            "top_gaps": catalog_gap_rollup([result["gaps"] for result in results]),
-        },
+        "sku_count": len(results),
+        "readiness_revenue_weighted": weighted,
+        "readiness_unweighted": unweighted,
+        "revenue_at_risk_total": round(total_revenue, 2),
+        "rate_limited_skus": rate_limited,
+        "top_gaps": catalog_gap_rollup([result["gaps"] for result in results]),
     }
