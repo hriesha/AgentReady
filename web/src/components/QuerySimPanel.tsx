@@ -18,13 +18,24 @@ export default function QuerySimPanel({ simulation }: QuerySimPanelProps) {
   return (
     <div>
       {simulation.surface_rate !== null && (
-        <p className="mb-3 text-sm text-stone-600">
-          Surfaced in{" "}
-          <span className="font-medium text-stone-900">
-            {Math.round(simulation.surface_rate * 100)}%
-          </span>{" "}
-          of simulated shopper queries, weighted by confidence.
-        </p>
+        <div className="mb-3">
+          <p className="text-sm text-stone-600">
+            Surfaced in{" "}
+            <span className="font-medium text-stone-900">
+              {Math.round(simulation.surface_rate * 100)}%
+            </span>{" "}
+            of simulated shopper queries, weighted by confidence.
+          </p>
+          <div className="mt-1.5 h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-stone-200">
+            <div
+              className="h-full"
+              style={{
+                width: `${simulation.surface_rate * 100}%`,
+                backgroundColor: "#065f46",
+              }}
+            />
+          </div>
+        </div>
       )}
       <ul className="space-y-3">
         {simulation.queries.map((query) => (
