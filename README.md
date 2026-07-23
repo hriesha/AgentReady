@@ -49,12 +49,23 @@ Note: on the free tier, API inputs may be used by the provider to improve their 
 
 ## Run locally
 
-To be documented: `docker compose up` and `make dev`.
+Copy `.env.example` to `.env` first (see Setup). Then either:
+
+- `docker compose up` runs both services, the app is at http://localhost:5173
+- `make dev` runs the API (port 8000) and the web dev server (port 5173) directly; requires Python 3.11+ with a `.venv` at the repo root holding `api/requirements.txt`, and Node 18+ with `npm install` run in `web/`
+
+`make test` runs the backend tests. No test makes a live LLM call.
 
 ## Deploy for free
 
-To be documented: frontend on Vercel, backend on Render or Railway, all on free tiers with no payment method.
+Both hosts have free tiers with no payment method. Deploy the backend first, then the frontend, then connect them.
+
+1. Backend on Render: create a free account at render.com, choose New, then Blueprint, and select this repository. `render.yaml` configures the service. The free plan sleeps when idle and cold-starts on the next request, which is fine for a demo.
+2. Frontend on Vercel: create a free account at vercel.com, import this repository, and set the Root Directory to `web`. Vercel detects Vite automatically. Add an environment variable `VITE_API_BASE_URL` set to your Render service URL (for example `https://agentready-api.onrender.com`).
+3. Connect them: in the Render dashboard set `WEB_ORIGIN` to your Vercel URL (for example `https://agentready.vercel.app`) so CORS allows the frontend.
+
+The blueprint ships with `DEMO_MODE=true`, so the public site serves the saved demo audit and needs no API key. To run live audits on the public site instead, set `DEMO_MODE=false` and fill in `LLM_API_KEY`, `LLM_BASE_URL`, and `LLM_MODEL` in the Render dashboard, using the same values as your local `.env`.
 
 ## Demo mode
 
-To be documented: with `DEMO_MODE=true` the app serves a precomputed audit of the bundled sample catalog and makes zero live LLM calls.
+With `DEMO_MODE=true` the app serves a precomputed audit of the bundled sample catalog from a committed JSON fixture. The dashboard, SKU detail views, query simulations, and CSV exports all work with zero live LLM calls, so the public URL always works, never hits a rate limit, and can never incur cost. Uploading is disabled in this mode with a short note; live audits run locally.
