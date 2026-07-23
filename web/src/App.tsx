@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getMeta } from "./api/client";
 import Dashboard from "./pages/Dashboard";
 import SkuDetail from "./pages/SkuDetail";
 import Upload from "./pages/Upload";
@@ -10,6 +11,18 @@ type View =
 
 export default function App() {
   const [view, setView] = useState<View>({ name: "upload" });
+  const [demoMode, setDemoMode] = useState(false);
+
+  useEffect(() => {
+    getMeta()
+      .then((meta) => {
+        if (meta.demo_mode && meta.demo_run_id) {
+          setDemoMode(true);
+          setView({ name: "dashboard", runId: meta.demo_run_id });
+        }
+      })
+      .catch(() => undefined);
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -30,6 +43,7 @@ export default function App() {
         {view.name === "dashboard" && (
           <Dashboard
             runId={view.runId}
+            demo={demoMode}
             onOpenSku={(skuId) =>
               setView({ name: "sku", runId: view.runId, skuId })
             }

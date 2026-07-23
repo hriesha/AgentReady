@@ -105,6 +105,11 @@ export interface RunResults {
   sku_results: SkuResult[];
 }
 
+export interface Meta {
+  demo_mode: boolean;
+  demo_run_id: string | null;
+}
+
 export interface ProgressEvent {
   sku_index?: number;
   sku_total?: number;

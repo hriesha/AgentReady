@@ -7,11 +7,17 @@ import type { ProgressEvent, RunResults } from "../types";
 
 interface DashboardProps {
   runId: string;
+  demo?: boolean;
   onOpenSku: (skuId: string) => void;
   onReset: () => void;
 }
 
-export default function Dashboard({ runId, onOpenSku, onReset }: DashboardProps) {
+export default function Dashboard({
+  runId,
+  demo = false,
+  onOpenSku,
+  onReset,
+}: DashboardProps) {
   const [results, setResults] = useState<RunResults | null>(null);
   const [progress, setProgress] = useState<ProgressEvent | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -85,6 +91,12 @@ export default function Dashboard({ runId, onOpenSku, onReset }: DashboardProps)
   const aggregates = results.aggregates;
   return (
     <div className="space-y-6">
+      {demo && (
+        <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600">
+          This is a saved demo audit of the bundled sample catalog. Live
+          audits run locally, see the README for setup.
+        </div>
+      )}
       {aggregates && aggregates.rate_limited_skus > 0 && (
         <div className="rounded-lg border border-slate-300 bg-slate-100 p-4 text-sm text-slate-700">
           Query simulation was temporarily unavailable for{" "}
@@ -164,13 +176,15 @@ export default function Dashboard({ runId, onOpenSku, onReset }: DashboardProps)
             >
               Download rewritten catalog CSV
             </a>
-            <button
-              type="button"
-              onClick={onReset}
-              className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100"
-            >
-              Audit another catalog
-            </button>
+            {!demo && (
+              <button
+                type="button"
+                onClick={onReset}
+                className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100"
+              >
+                Audit another catalog
+              </button>
+            )}
           </div>
         </div>
         <SkuTable results={results.sku_results} onOpen={onOpenSku} />

@@ -1,4 +1,5 @@
 import type {
+  Meta,
   ProgressEvent,
   RunResults,
   SkuResult,
@@ -27,6 +28,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new Error(message);
   }
   return response.json() as Promise<T>;
+}
+
+export function getMeta(): Promise<Meta> {
+  return request<Meta>("/api/meta");
 }
 
 export function uploadCatalog(file: File): Promise<UploadResponse> {
