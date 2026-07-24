@@ -9,7 +9,6 @@ import LoadingBar from "../components/LoadingBar";
 import type { UploadResponse } from "../types";
 
 interface UploadProps {
-  demoMode: boolean;
   onAuditStarted: (runId: string) => void;
 }
 
@@ -32,7 +31,7 @@ const BUSY_MESSAGES: Record<BusyKind, string[]> = {
   ],
 };
 
-export default function Upload({ demoMode, onAuditStarted }: UploadProps) {
+export default function Upload({ onAuditStarted }: UploadProps) {
   const [upload, setUpload] = useState<UploadResponse | null>(null);
   const [busy, setBusy] = useState<BusyKind | null>(null);
   const [starting, setStarting] = useState(false);
@@ -109,20 +108,17 @@ export default function Upload({ demoMode, onAuditStarted }: UploadProps) {
         Audit a product catalog
       </h2>
       <p className="mt-1 text-sm text-stone-600">
-        {demoMode
-          ? "Open a saved audit of a 20 product sample catalog to see how ready each product is to be found and recommended by AI shopping assistants."
-          : "Upload a catalog CSV to score how ready each product is to be found and recommended by AI shopping assistants."}
+        Upload a catalog CSV to score how ready each product is to be found
+        and recommended by AI shopping assistants.
       </p>
 
       <div
         onDragOver={(event) => {
-          if (demoMode) return;
           event.preventDefault();
           setDragActive(true);
         }}
         onDragLeave={() => setDragActive(false)}
         onDrop={(event) => {
-          if (demoMode) return;
           event.preventDefault();
           setDragActive(false);
           onFileChosen(event.dataTransfer.files[0]);
@@ -131,38 +127,28 @@ export default function Upload({ demoMode, onAuditStarted }: UploadProps) {
           dragActive ? "border-stone-500 bg-stone-100" : "border-stone-300 bg-white"
         }`}
       >
-        <p className="text-sm text-stone-600">
-          {demoMode
-            ? "This site serves a saved audit, so live runs are disabled here."
-            : "Drop a CSV here, or"}
-        </p>
+        <p className="text-sm text-stone-600">Drop a CSV here, or</p>
         <div className="mt-3 flex items-center justify-center gap-3">
-          {!demoMode && (
-            <button
-              type="button"
-              disabled={busy !== null}
-              onClick={() => inputRef.current?.click()}
-              className="rounded-md bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700 disabled:opacity-50"
-            >
-              Choose a file
-            </button>
-          )}
+          <button
+            type="button"
+            disabled={busy !== null}
+            onClick={() => inputRef.current?.click()}
+            className="rounded-md bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700 disabled:opacity-50"
+          >
+            Choose a file
+          </button>
           <button
             type="button"
             disabled={busy !== null}
             onClick={() => void useSampleCatalog()}
-            className={`rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50 ${
-              demoMode
-                ? "bg-stone-900 text-white hover:bg-stone-700"
-                : "border border-stone-300 bg-white text-stone-700 hover:bg-stone-100"
-            }`}
+            className="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-100 disabled:opacity-50"
           >
-            {demoMode ? "See the sample audit" : "Use sample catalog"}
+            Use sample catalog
           </button>
         </div>
         <p className="mt-3 text-sm text-stone-500">
-          This option is for viewing how the product looks, give it a couple
-          seconds to start!
+          The sample catalog option is for viewing how the product looks, give
+          it a couple seconds to start!
         </p>
         <input
           ref={inputRef}

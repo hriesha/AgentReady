@@ -35,7 +35,6 @@ export default function App() {
       <main className="mx-auto max-w-6xl px-6 py-8">
         {view.name === "upload" && (
           <Upload
-            demoMode={demoMode}
             onAuditStarted={(runId) => setView({ name: "dashboard", runId })}
           />
         )}
