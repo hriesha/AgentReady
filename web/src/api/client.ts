@@ -34,6 +34,23 @@ export function getMeta(): Promise<Meta> {
   return request<Meta>("/api/meta");
 }
 
+let metaPromise: Promise<Meta> | null = null;
+
+/**
+ * One shared in-flight meta request. The host sleeps when idle, so this call
+ * can take most of a minute; anything that needs the answer waits on the same
+ * promise rather than starting a second cold request.
+ */
+export function getMetaOnce(): Promise<Meta> {
+  if (!metaPromise) {
+    metaPromise = getMeta().catch((error: unknown) => {
+      metaPromise = null;
+      throw error;
+    });
+  }
+  return metaPromise;
+}
+
 export function uploadCatalog(file: File): Promise<UploadResponse> {
   const form = new FormData();
   form.append("file", file);
