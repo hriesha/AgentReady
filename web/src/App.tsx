@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getMeta } from "./api/client";
+import { getMetaOnce } from "./api/client";
 import Dashboard from "./pages/Dashboard";
 import SkuDetail from "./pages/SkuDetail";
 import Upload from "./pages/Upload";
@@ -13,14 +13,12 @@ export default function App() {
   const [view, setView] = useState<View>({ name: "upload" });
   const [demoMode, setDemoMode] = useState(false);
 
+  // Learned in the background only so the upload page can hide the affordances
+  // that a saved demo cannot serve. Entering the demo is the button's job, so
+  // a slow answer here never holds up the page.
   useEffect(() => {
-    getMeta()
-      .then((meta) => {
-        if (meta.demo_mode && meta.demo_run_id) {
-          setDemoMode(true);
-          setView({ name: "dashboard", runId: meta.demo_run_id });
-        }
-      })
+    getMetaOnce()
+      .then((meta) => setDemoMode(meta.demo_mode))
       .catch(() => undefined);
   }, []);
 
@@ -37,6 +35,7 @@ export default function App() {
       <main className="mx-auto max-w-6xl px-6 py-8">
         {view.name === "upload" && (
           <Upload
+            demoMode={demoMode}
             onAuditStarted={(runId) => setView({ name: "dashboard", runId })}
           />
         )}

@@ -1,21 +1,47 @@
 import { useRef, useState } from "react";
-import { startAudit, uploadCatalog, uploadSampleCatalog } from "../api/client";
+import {
+  getMetaOnce,
+  startAudit,
+  uploadCatalog,
+  uploadSampleCatalog,
+} from "../api/client";
+import LoadingBar from "../components/LoadingBar";
 import type { UploadResponse } from "../types";
 
 interface UploadProps {
+  demoMode: boolean;
   onAuditStarted: (runId: string) => void;
 }
 
-export default function Upload({ onAuditStarted }: UploadProps) {
+type BusyKind = "sample" | "file";
+
+const BUSY_MESSAGES: Record<BusyKind, string[]> = {
+  sample: [
+    "Waking up the server",
+    "It sleeps when nobody is using it, so the first visit takes a moment",
+    "Reading the sample catalog",
+    "Matching the columns to the attribute schema",
+    "Scoring 20 products against the rubric",
+    "Almost there, thanks for waiting",
+  ],
+  file: [
+    "Reading your CSV",
+    "Matching the columns to the attribute schema",
+    "Coercing prices, sizes, and stock values",
+    "Counting the products it found",
+  ],
+};
+
+export default function Upload({ demoMode, onAuditStarted }: UploadProps) {
   const [upload, setUpload] = useState<UploadResponse | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<BusyKind | null>(null);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleUpload = async (task: Promise<UploadResponse>) => {
-    setBusy(true);
+  const handleUpload = async (kind: BusyKind, task: Promise<UploadResponse>) => {
+    setBusy(kind);
     setError(null);
     setUpload(null);
     try {
@@ -25,13 +51,40 @@ export default function Upload({ onAuditStarted }: UploadProps) {
         uploadError instanceof Error ? uploadError.message : "upload failed",
       );
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   };
 
   const onFileChosen = (file: File | undefined) => {
     if (file) {
-      void handleUpload(uploadCatalog(file));
+      void handleUpload("file", uploadCatalog(file));
+    }
+  };
+
+  /**
+   * The entry point into the sample audit, and the place the cold start is
+   * absorbed. A saved demo cannot accept an upload, so once meta says demo the
+   * button opens the stored run instead of posting a catalog it would reject.
+   */
+  const useSampleCatalog = async () => {
+    setBusy("sample");
+    setError(null);
+    setUpload(null);
+    try {
+      const meta = await getMetaOnce().catch(() => null);
+      if (meta?.demo_mode && meta.demo_run_id) {
+        onAuditStarted(meta.demo_run_id);
+        return;
+      }
+      setUpload(await uploadSampleCatalog());
+    } catch (sampleError) {
+      setError(
+        sampleError instanceof Error
+          ? sampleError.message
+          : "could not load the sample catalog",
+      );
+    } finally {
+      setBusy(null);
     }
   };
 
@@ -56,17 +109,20 @@ export default function Upload({ onAuditStarted }: UploadProps) {
         Audit a product catalog
       </h2>
       <p className="mt-1 text-sm text-stone-600">
-        Upload a catalog CSV to score how ready each product is to be found
-        and recommended by AI shopping assistants.
+        {demoMode
+          ? "Open a saved audit of a 20 product sample catalog to see how ready each product is to be found and recommended by AI shopping assistants."
+          : "Upload a catalog CSV to score how ready each product is to be found and recommended by AI shopping assistants."}
       </p>
 
       <div
         onDragOver={(event) => {
+          if (demoMode) return;
           event.preventDefault();
           setDragActive(true);
         }}
         onDragLeave={() => setDragActive(false)}
         onDrop={(event) => {
+          if (demoMode) return;
           event.preventDefault();
           setDragActive(false);
           onFileChosen(event.dataTransfer.files[0]);
@@ -75,25 +131,39 @@ export default function Upload({ onAuditStarted }: UploadProps) {
           dragActive ? "border-stone-500 bg-stone-100" : "border-stone-300 bg-white"
         }`}
       >
-        <p className="text-sm text-stone-600">Drop a CSV here, or</p>
+        <p className="text-sm text-stone-600">
+          {demoMode
+            ? "This site serves a saved audit, so live runs are disabled here."
+            : "Drop a CSV here, or"}
+        </p>
         <div className="mt-3 flex items-center justify-center gap-3">
+          {!demoMode && (
+            <button
+              type="button"
+              disabled={busy !== null}
+              onClick={() => inputRef.current?.click()}
+              className="rounded-md bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700 disabled:opacity-50"
+            >
+              Choose a file
+            </button>
+          )}
           <button
             type="button"
-            disabled={busy}
-            onClick={() => inputRef.current?.click()}
-            className="rounded-md bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700 disabled:opacity-50"
+            disabled={busy !== null}
+            onClick={() => void useSampleCatalog()}
+            className={`rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50 ${
+              demoMode
+                ? "bg-stone-900 text-white hover:bg-stone-700"
+                : "border border-stone-300 bg-white text-stone-700 hover:bg-stone-100"
+            }`}
           >
-            Choose a file
-          </button>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => void handleUpload(uploadSampleCatalog())}
-            className="rounded-md border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-100 disabled:opacity-50"
-          >
-            Use sample catalog
+            {demoMode ? "See the sample audit" : "Use sample catalog"}
           </button>
         </div>
+        <p className="mt-3 text-sm text-stone-500">
+          This option is for viewing how the product looks, give it a couple
+          seconds to start!
+        </p>
         <input
           ref={inputRef}
           type="file"
@@ -101,7 +171,18 @@ export default function Upload({ onAuditStarted }: UploadProps) {
           className="hidden"
           onChange={(event) => onFileChosen(event.target.files?.[0])}
         />
-        {busy && <p className="mt-3 text-sm text-stone-500">Uploading...</p>}
+        {busy && (
+          <div className="mt-6">
+            <LoadingBar
+              title={
+                busy === "sample"
+                  ? "Loading the sample catalog"
+                  : "Reading your catalog"
+              }
+              messages={BUSY_MESSAGES[busy]}
+            />
+          </div>
+        )}
       </div>
 
       {error && (
